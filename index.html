@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CryptoZombies - Blockchain NFT Game</title>
+  <link rel="icon" href="favicon.ico">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f1e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+
+    h1 {
+      font-size: 3em;
+      background: linear-gradient(90deg, #00d4ff, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #00d4ff;
+      font-size: 1.1em;
+    }
+
+    #txStatus {
+      text-align: center;
+      padding: 15px;
+      margin: 20px 0;
+      background: rgba(0, 212, 255, 0.1);
+      border: 2px solid #00d4ff;
+      border-radius: 10px;
+      font-weight: bold;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 1.1em;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.4);
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px 0 rgba(102, 126, 234, 0.6);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #zombies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+
+    .zombie-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 15px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .zombie-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0, 212, 255, 0.3);
+      border-color: #00d4ff;
+    }
+
+    .zombie-avatar {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4em;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .zombie-avatar::before {
+      content: '🧟';
+      font-size: 80px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .zombie-info {
+      list-style: none;
+    }
+
+    .zombie-info li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .zombie-info li:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #00d4ff;
+    }
+
+    .stats {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .stat-box {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 8px;
+      border: 1px solid #00d4ff;
+    }
+
+    .stat-value {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #00d4ff;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+      font-size: 1.2em;
+    }
+
+    .empty-state::before {
+      content: '🧟‍♂️';
+      display: block;
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+
+    @keyframes glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+      }
+
+      50% {
+        box-shadow: 0 0 40px rgba(0, 212, 255, 0.8);
+      }
+    }
+
+    .connected {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: #00ff00;
+      animation: glow 2s ease-in-out infinite;
+    }
+  </style>
+
+  <script language="javascript" type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script language="javascript" type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.2.7-rc.0/web3.min.js"></script>
+  <script language="javascript" type="text/javascript" src="cryptozombies_abi.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>CryptoZombies</h1>
+      <p class="subtitle">🎮 Collect, Battle & Evolve Your Zombie Army 🧟</p>
+    </header>
+
+    <div id="txStatus">Connect your MetaMask wallet to begin...</div>
+
+    <div class="controls">
+      <button class="showZombieButton">👁️ Show My Zombies</button>
+      <button class="createzombieButton">⚡ Create Zombie</button>
+      <button class="levelupButton">⬆️ Level Up</button>
+    </div>
+
+    <div id="zombies"></div>
+  </div>
+
+  <script>
+    var cryptoZombies;
+    var userAccount;
+    const showZombieButton = document.querySelector('.showZombieButton');
+    const createzombieButton = document.querySelector('.createzombieButton');
+    const levelupButton = document.querySelector('.levelupButton');
+
+    // Function to load contract address from deployment info
+    async function loadContractAddress() {
+      try {
+        const response = await fetch('deployment-info.json?ts=' + Date.now());
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        const data = await response.json();
+        return data.contractAddress;
+      } catch (error) {
+        console.error('Failed to load deployment info:', error);
+        return null;
+      }
+    }
+
+    async function startApp() {
+      // Try to load contract address dynamically
+      const contractAddress = await loadContractAddress();
+
+      if (!contractAddress) {
+        $("#txStatus").html("Could not find contract address. Make sure Ganache is running and re-run truffle migrate --reset to generate deployment-info.json at the project root.");
+        return;
+      }
+
+      console.log('Using contract address:', contractAddress);
+
+      // Network/chain check
+      const chainId = await web3.eth.getChainId();
+      const chainIdHex = '0x' + chainId.toString(16);
+      if (chainIdHex !== '0x539') {
+        $("#txStatus").html("⚠️ Network mismatch — switch MetaMask to Ganache (Chain ID: 1337).");
+        $("#txStatus").css('background', 'rgba(255, 193, 7, 0.1)');
+        $("#txStatus").css('border-color', '#ffc107');
+        return;
+      }
+
+      cryptoZombies = new web3.eth.Contract(cryptoZombiesABI, contractAddress);
+
+      // Event listener for transfers
+      cryptoZombies.events.Transfer({ filter: { _to: userAccount } })
+        .on("data", function (event) {
+          let data = event.returnValues;
+          getZombiesByOwner(userAccount).then(displayZombies);
+        }).on("error", console.error);
+
+      $("#txStatus").html("✅ Connected! Ready to create zombies.");
+      $("#txStatus").addClass("connected");
+    }
+
+    function displayZombies(ids) {
+      $("#zombies").empty();
+
+      if (ids.length === 0) {
+        $("#zombies").html('<div class="empty-state">No zombies yet! Create your first one above 🧟</div>');
+        return;
+      }
+
+      for (id of ids) {
+        getZombieDetails(id)
+          .then(function (zombie) {
+            const readyTime = new Date(zombie.readyTime * 1000).toLocaleString();
+            const level = zombie.level.toString();
+            const wins = zombie.winCount.toString();
+            const losses = zombie.lossCount.toString();
+
+            const dnaString = zombie.dna.toString().padStart(16, '0');
+            const isReady = zombie.readyTime * 1000 <= Date.now();
+
+            $("#zombies").append(`
+              <div class="zombie-card">
+                <div class="zombie-avatar" style="background: linear-gradient(135deg, hsl(${parseInt(dnaString.substring(0, 3)) % 360}, 70%, 60%) 0%, hsl(${(parseInt(dnaString.substring(3, 6)) % 360)}, 70%, 50%) 100%);">
+                </div>
+                <ul class="zombie-info">
+                  <li><span class="label">🆔 ID:</span> <span>#${id}</span></li>
+                  <li><span class="label">👤 Name:</span> <span>${zombie.name}</span></li>
+                  <li><span class="label">🧬 DNA:</span> <span>${dnaString}</span></li>
+                  <li><span class="label">${isReady ? '✅' : '⏰'}</span> <span>${isReady ? 'Ready' : 'Cooldown'}</span></li>
+                </ul>
+                <div class="stats">
+                  <div class="stat-box">
+                    <div class="stat-value">${level}</div>
+                    <div>Level</div>
+                  </div>
+                  <div class="stat-box">
+                    <div class="stat-value">${wins}</div>
+                    <div>Wins</div>
+                  </div>
+                  <div class="stat-box">
+                    <div class="stat-value">${losses}</div>
+                    <div>Losses</div>
+                  </div>
+                </div>
+              </div>
+            `);
+          });
+      }
+    }
+
+    function createRandomZombie(name) {
+      if (!name || name.trim() === '') {
+        name = prompt("Enter a name for your zombie:", "Zombie" + Date.now());
+      }
+
+      if (!name || name.trim() === '') {
+        $("#txStatus").text("❌ Invalid zombie name");
+        return;
+      }
+
+      $("#txStatus").html("⏳ Creating new zombie on the blockchain...<br>This may take a moment...");
+
+      return cryptoZombies.methods.createRandomZombie(name)
+        .send({ from: userAccount })
+        .on("receipt", function (receipt) {
+          $("#txStatus").html(`✅ Successfully created <strong>${name}</strong>!<br>🧟 Your zombie is ready for battle!`);
+          getZombiesByOwner(userAccount).then(displayZombies);
+        })
+        .on("error", function (error) {
+          $("#txStatus").text("❌ Error: " + error.message);
+        });
+    }
+
+    function feedOnKitty(zombieId, kittyId) {
+      $("#txStatus").text("⏳ Eating a kitty. This may take a while...");
+      return cryptoZombies.methods.feedOnKitty(zombieId, kittyId)
+        .send({ from: userAccount })
+        .on("receipt", function (receipt) {
+          $("#txStatus").html("✅ Ate a kitty and spawned a new Zombie!");
+          getZombiesByOwner(userAccount).then(displayZombies);
+        })
+        .on("error", function (error) {
+          $("#txStatus").text("❌ " + error.message);
+        });
+    }
+
+    function levelUp(zombieId) {
+      $("#txStatus").text("⏳ Leveling up your zombie...");
+
+      return getZombiesByOwner(userAccount).then(function (ids) {
+        if (ids.length === 0) {
+          $("#txStatus").text("❌ You don't have any zombies to level up!");
+          return;
+        }
+
+        const targetZombieId = ids[0];
+
+        return cryptoZombies.methods.levelUp(targetZombieId)
+          .send({ from: userAccount, value: web3.utils.toWei("0.001", "ether") })
+          .on("receipt", function (receipt) {
+            $("#txStatus").html("✅ Power overwhelming! Zombie successfully leveled up! 🚀");
+            getZombiesByOwner(userAccount).then(displayZombies);
+          })
+          .on("error", function (error) {
+            $("#txStatus").text("❌ " + error.message);
+          });
+      });
+    }
+
+    function getZombieDetails(id) {
+      return cryptoZombies.methods.zombies(id).call();
+    }
+
+    function zombieToOwner(id) {
+      return cryptoZombies.methods.zombieToOwner(id).call();
+    }
+
+    function getZombiesByOwner(owner) {
+      return cryptoZombies.methods.getZombiesByOwner(owner).call();
+    }
+
+    window.addEventListener('load', async () => {
+      if (window.ethereum) {
+        try {
+          // Request account access
+          await ethereum.request({ method: 'eth_requestAccounts' });
+          userAccount = (await ethereum.request({ method: 'eth_accounts' }))[0];
+
+          const target = '0x539'; // 1337
+          const current = await ethereum.request({ method: 'eth_chainId' });
+
+          if (current !== target) {
+            try {
+              await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: target }] });
+            } catch (e) {
+              if (e.code === 4902) {
+                await ethereum.request({
+                  method: 'wallet_addEthereumChain', params: [{
+                    chainId: target,
+                    chainName: 'Ganache Local',
+                    rpcUrls: ['http://127.0.0.1:7545'],
+                    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }
+                  }]
+                });
+              } else {
+                throw e;
+              }
+            }
+          }
+
+          console.log('Connected account:', userAccount);
+          console.log('ChainId:', await ethereum.request({ method: 'eth_chainId' }));
+
+          window.web3 = new Web3(ethereum);
+          startApp();
+        } catch (error) {
+          $("#txStatus").html("❌ User denied account access. Please connect MetaMask.");
+        }
+      }
+      else if (window.web3) {
+        window.web3 = new Web3(web3.currentProvider);
+        userAccount = web3.eth.accounts[0];
+        startApp();
+      }
+      else {
+        $("#txStatus").html("❌ Non-Ethereum browser detected.<br>Please install MetaMask!");
+      }
+    });
+
+    if (window.ethereum) {
+      ethereum.on('accountsChanged', (accounts) => {
+        window.location.reload();
+      });
+
+      ethereum.on('chainChanged', (chainId) => {
+        window.location.reload();
+      });
+    }
+
+    createzombieButton.addEventListener('click', () => {
+      const zombieName = prompt("Enter a name for your zombie:", "Zombie" + Math.floor(Math.random() * 1000));
+      createRandomZombie(zombieName);
+    });
+
+    showZombieButton.addEventListener('click', () => {
+      $("#txStatus").text("📋 Loading your zombie army...");
+      getZombiesByOwner(userAccount)
+        .then(function (ids) {
+          if (ids.length === 0) {
+            $("#txStatus").text("📭 You don't have any zombies yet. Create one!");
+          } else {
+            $("#txStatus").text(`📋 Found ${ids.length} zombie(s)`);
+          }
+          return ids;
+        })
+        .then(displayZombies);
+    });
+
+    levelupButton.addEventListener('click', () => {
+      levelUp();
+    });
+  </script>
+</body>
+
+</html>
