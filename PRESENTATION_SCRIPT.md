@@ -93,3 +93,5 @@ Thank you. Questions?"
 ### About the Blockchain Integration:
 "Every action - creating a zombie, leveling up - is a blockchain transaction that requires MetaMask confirmation and costs gas fees on the Ganache test network."
 
+
+

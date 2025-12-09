@@ -5,6 +5,9 @@ import "./zombiefeeding.sol";
 contract ZombieHelper is ZombieFeeding {
 
   uint levelUpFee = 0.001 ether;
+  uint constant MAX_LEVEL = 50;
+
+  event ZombieLeveledUp(uint indexed zombieId, uint32 newLevel, address owner);
 
   modifier aboveLevel(uint _level, uint _zombieId) {
     require(zombies[_zombieId].level >= _level);
@@ -20,9 +23,12 @@ contract ZombieHelper is ZombieFeeding {
     levelUpFee = _fee;
   }
 
-  function levelUp(uint _zombieId) external payable {
-    require(msg.value == levelUpFee);
+  function levelUp(uint _zombieId) external payable onlyOwnerOf(_zombieId) {
+    require(msg.value == levelUpFee, "Must pay exact level up fee");
+    require(zombies[_zombieId].level < MAX_LEVEL, "Zombie has reached maximum level");
+    
     zombies[_zombieId].level = zombies[_zombieId].level.add(1);
+    emit ZombieLeveledUp(_zombieId, zombies[_zombieId].level, msg.sender);
   }
 
   function changeName(uint _zombieId, string _newName) external aboveLevel(2, _zombieId) onlyOwnerOf(_zombieId) {

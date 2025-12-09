@@ -1,4 +1,5 @@
 # CryptoZombies DApp - CPSC 559 Midterm Project
+**GitHub Repository:** [https://github.com/Balsoos/CryptoZombies-DApp](https://github.com/Balsoos/CryptoZombies-DApp)
 
 ## Team Information
 
@@ -10,54 +11,66 @@ I did this project by myself
 
 ## Description
 
-CryptoZombies is a decentralized application (DApp) built on Ethereum that allows users to create, collect, and battle with unique zombie NFTs. This project is an enhanced version of the CryptoZombies lesson starter code, featuring improved UI/UX, dynamic contract deployment, and additional functionality.
+CryptoZombies is a decentralized application (DApp) built on Ethereum that allows users to create, collect, and battle with unique zombie NFTs. This project is an enhanced version of the CryptoZombies lesson starter code, featuring improved UI/UX, dynamic contract deployment, and additional functionality. (Note this is an extension of the cryptozombies DApp I did for the midterm, I just improved on it)
 
 ---
 
-## Improvements Made
+## Recent Fixes & Improvements
 
-### 1. **Dynamic Contract Address Loading** ✅
-- **Description:** Removed hard-coded contract addresses and implemented dynamic loading from deployment artifacts
-- **Implementation:** Created automatic contract address detection through `deployment-info.json` file
-- **Benefit:** No more manual editing required when deploying to different networks
+### Critical Bug Fixes (Latest)
+1. **Fixed `_transfer` Bug** ✅
+   - **Issue:** The `_transfer` function in `zombieownership.sol` was using `msg.sender` instead of `_from` parameter
+   - **Fix:** Changed to use `_from` parameter correctly for balance tracking
+   - **Impact:** Prevents incorrect zombie ownership balance calculations
 
-### 2. **Modern UI/UX Design** ✅
-- **Description:** Completely redesigned the frontend with modern, responsive UI
-- **Features:**
-  - Gradient backgrounds and glassmorphism effects
-  - Animated zombie cards with hover effects
-  - Color-coded zombie avatars based on DNA
-  - Real-time status updates
-  - Responsive grid layout for zombie display
-  - Improved button styling and interactions
+2. **Fixed ABI Mismatch** ✅
+   - **Issue:** `getAllZombies` function was in ABI but not implemented in contract
+   - **Fix:** Removed the non-existent function from `cryptozombies_abi.js`
+   - **Impact:** Prevents potential frontend errors
 
-### 3. **Enhanced User Experience** ✅
-- **Description:** Added better visual feedback and user interactions
-- **Features:**
-  - Real-time transaction status updates with emojis
-  - Empty state messaging when no zombies exist
-  - Detailed zombie statistics display
-  - Connection status indicators
-  - Smooth animations and transitions
+3. **Fixed Web3.js Compatibility** ✅
+   - **Issue:** Old Web3.js v0.x syntax in fallback code (`web3.eth.accounts[0]`)
+   - **Fix:** Updated to use async `web3.eth.getAccounts()` for Web3.js v1.x compatibility
+   - **Impact:** Better compatibility with modern Web3 providers
 
-### 4. **Zombie Visual Representation** ✅
-- **Description:** Added visual representation of zombies based on their DNA
-- **Implementation:** Color gradients generated from zombie DNA values
-- **Benefit:** Each zombie has a unique visual identity
+### New Improvements (Latest)
+1. **Enhanced Input Validation** ✅
+   - Added zombie name length validation (max 50 characters)
+   - Added check to prevent creating multiple free zombies
+   - Better validation messages
 
-### 5. **Improved Error Handling** ✅
-- **Description:** Better error messages and user feedback
-- **Features:**
-  - Clear status messages for all operations
-  - Error display with specific details
-  - Connection validation before operations
+2. **Improved Error Handling** ✅
+   - User-friendly error messages for common issues
+   - Balance check before leveling up
+   - Better transaction error categorization
 
-### 6. **Enhanced Deployment Process** ✅
-- **Description:** Improved migration script with better logging
-- **Features:**
-  - Automatic deployment info saving
-  - Clear console output for debugging
-  - Network information display
+3. **Better User Feedback** ✅
+   - Clear messages for insufficient balance
+   - Validation before attempting transactions
+   - More informative error messages
+
+### Previous Improvements
+
+1. **Dynamic Contract Address Loading** ✅
+   - Automatic contract address detection through `deployment-info.json`
+   - No manual editing required when deploying to different networks
+
+2. **Modern UI/UX Design** ✅
+   - Gradient backgrounds and glassmorphism effects
+   - Animated zombie cards with hover effects
+   - Color-coded zombie avatars based on DNA
+   - Responsive grid layout
+
+3. **Enhanced User Experience** ✅
+   - Real-time transaction status updates
+   - Empty state messaging
+   - Detailed zombie statistics display
+   - Connection status indicators
+
+4. **Enhanced Deployment Process** ✅
+   - Automatic deployment info saving
+   - Clear console output for debugging
+   - Network information display
 
 ---
 
@@ -73,41 +86,44 @@ Before running this project, ensure you have the following installed:
 
 ---
 
-## Installation & Setup
+## Quick Start Guide
 
-### Step 1: Install Dependencies
+### Prerequisites
+- **Node.js** v14.16.0 or compatible
+- **Truffle** v5.4.25 (install with `npm install -g truffle@5.4.25`)
+- **Ganache Desktop** v2.5.4
+- **MetaMask** browser extension
 
+### Step-by-Step Setup
+
+#### 1. Install Dependencies
 ```bash
-cd cryptozombie_demo_package
 npm install
 ```
 
-### Step 2: Start Ganache
+#### 2. Start Ganache
+1. Open **Ganache Desktop**
+2. Create a new workspace with these settings:
+   - **Host:** `127.0.0.1`
+   - **Port:** `7545`
+   - **Network ID:** `1337`
+3. Click **"Save"** to start the blockchain
 
-1. Open Ganache Desktop application
-2. Ensure the following settings:
-   - **Host:** 127.0.0.1
-   - **Port:** 7545
-   - **Network ID:** 1337
-3. Create a new workspace if needed
-4. Copy the mnemonic phrase (12-word phrase)
-
-### Step 3: Configure MetaMask
-
+#### 3. Configure MetaMask
 1. Open MetaMask extension
-2. Click on the network dropdown
-3. Select "Add Network" → "Add a network manually"
-4. Enter the following details:
-   - **Network Name:** Ganache Local
-   - **RPC URL:** http://127.0.0.1:7545
-   - **Chain ID:** 1337
-   - **Currency Symbol:** ETH
-5. Import an account from Ganache:
-   - Click "Import Account" in MetaMask
-   - Paste the private key from Ganache (first account recommended)
+2. Click network dropdown → **"Add Network"** → **"Add a network manually"**
+3. Enter:
+   - **Network Name:** `Ganache Local`
+   - **RPC URL:** `http://127.0.0.1:7545`
+   - **Chain ID:** `1337`
+   - **Currency Symbol:** `ETH`
+4. Click **"Save"**
+5. Import an account:
+   - Click **"Import Account"** in MetaMask
+   - Copy the **private key** from Ganache (click key icon next to first account)
+   - Paste and import
 
-### Step 4: Deploy Smart Contracts
-
+#### 4. Deploy Contracts
 ```bash
 truffle migrate --reset
 ```
@@ -121,46 +137,44 @@ ZombieOwnership (MAIN CONTRACT) deployed at: 0x...
 Deployment info saved to deployment-info.json
 ```
 
-### Step 5: Connect Kitty Contract (Optional)
+> **Note:** The Kitty contract is automatically deployed and configured. No manual setup needed!
 
-If you want to enable the "Feed on Kitties" functionality:
-
+#### 5. Start Frontend Server
 ```bash
-# First, deploy the Kitty contract
-truffle console
+# Option 1: Using npx (recommended)
+npx http-server -p 8080
 
-# In the console:
-let kitty = await KittyContract.deployed()
-await ZombieOwnership.deployed().setKittyContractAddress(kitty.address)
-```
+# Option 2: Using Python
+python -m http.server 8080
 
-### Step 6: Start the Frontend
-
-Install and start a local HTTP server:
-
-**Option 1: Using http-server (npm)**
-```bash
+# Option 3: Install globally first
 npm install -g http-server
 http-server -p 8080
 ```
 
-**Option 2: Using Python**
-```bash
-python -m http.server 8080
-```
+#### 6. Open the DApp
+1. Navigate to: **http://localhost:8080**
+2. MetaMask should prompt to connect (or click MetaMask icon)
+3. Make sure you're on the **"Ganache Local"** network (Chain ID: 1337)
 
-**Option 3: Using Node.js http-server**
-```bash
-npx http-server -p 8080
-```
+### Using the DApp
 
-### Step 7: Access the DApp
+1. **Create Your First Zombie:**
+   - Click **"⚡ Create Zombie"**
+   - Enter a name (max 50 characters)
+   - Confirm transaction in MetaMask
+   - Wait for confirmation
 
-1. Open your browser and navigate to: `http://localhost:8080`
-2. Make sure MetaMask is connected to the Ganache network
-3. Click "Create Zombie" to create your first zombie!
-4. Click "Show My Zombies" to view your zombie collection
-5. Click "Level Up" to level up your zombies (costs 0.001 ETH)
+2. **View Your Zombies:**
+   - Click **"👁️ Show My Zombies"**
+   - See your zombie collection with stats
+
+3. **Level Up:**
+   - Click **"⬆️ Level Up"**
+   - Costs **0.001 ETH**
+   - Confirm transaction in MetaMask
+
+> **Important:** You can only create **one free zombie** per account. After that, you need to feed on kitties or attack other zombies to get more!
 
 ---
 
@@ -321,14 +335,6 @@ truffle test
 
 ---
 
-## Git Repository
-
-[Include your GitHub repository link here if applicable]
-
-Repository URL: [https://github.com/yourusername/cryptozombies-dapp]
-
----
-
 ## References
 
 - CryptoZombies Tutorial: https://cryptozombies.io/
@@ -355,13 +361,7 @@ This project is created for educational purposes as part of CPSC 559 Blockchain 
 
 ---
 
-## Contact
-
-For questions or issues, please contact the team via email:
-- [Team Member Email 1]
-- [Team Member Email 2]
-
 ---
 
-**Last Updated:** [Current Date]
+**Last Updated:** [12.7.2025]
 

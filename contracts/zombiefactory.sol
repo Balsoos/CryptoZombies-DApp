@@ -10,6 +10,7 @@ contract ZombieFactory is Ownable {
   using SafeMath16 for uint16;
 
   event NewZombie(uint zombieId, string name, uint dna);
+  event ZombieCreated(uint indexed zombieId, string name, uint dna, address owner);
 
   uint dnaDigits = 16;
   uint dnaModulus = 10 ** dnaDigits;
@@ -34,6 +35,7 @@ contract ZombieFactory is Ownable {
     zombieToOwner[id] = msg.sender;
     ownerZombieCount[msg.sender] = ownerZombieCount[msg.sender].add(1);
     emit NewZombie(id, _name, _dna);
+    emit ZombieCreated(id, _name, _dna, msg.sender);
   }
 
   function _generateRandomDna(string _str) private view returns (uint) {

@@ -362,21 +362,45 @@
       }
 
       if (!name || name.trim() === '') {
-        $("#txStatus").text("❌ Invalid zombie name");
+        $("#txStatus").text("❌ Invalid zombie name. Please enter a non-empty name.");
         return;
       }
 
-      $("#txStatus").html("⏳ Creating new zombie on the blockchain...<br>This may take a moment...");
+      // Validate name length (Solidity strings have practical limits)
+      if (name.length > 50) {
+        $("#txStatus").text("❌ Zombie name is too long. Please use 50 characters or less.");
+        return;
+      }
 
-      return cryptoZombies.methods.createRandomZombie(name)
-        .send({ from: userAccount })
-        .on("receipt", function (receipt) {
-          $("#txStatus").html(`✅ Successfully created <strong>${name}</strong>!<br>🧟 Your zombie is ready for battle!`);
-          getZombiesByOwner(userAccount).then(displayZombies);
-        })
-        .on("error", function (error) {
-          $("#txStatus").text("❌ Error: " + error.message);
-        });
+      // Check if user already has a zombie (only first zombie is free)
+      getZombiesByOwner(userAccount).then(function(ids) {
+        if (ids.length > 0) {
+          $("#txStatus").text("❌ You already have a zombie! You can only create one for free.");
+          return;
+        }
+
+        $("#txStatus").html("⏳ Creating new zombie on the blockchain...<br>This may take a moment...");
+
+        return cryptoZombies.methods.createRandomZombie(name)
+          .send({ from: userAccount })
+          .on("receipt", function (receipt) {
+            $("#txStatus").html(`✅ Successfully created <strong>${name}</strong>!<br>🧟 Your zombie is ready for battle!`);
+            getZombiesByOwner(userAccount).then(displayZombies);
+          })
+          .on("error", function (error) {
+            let errorMsg = "❌ Error creating zombie: ";
+            if (error.message.includes("revert")) {
+              errorMsg += "Transaction was rejected. You may already have a zombie.";
+            } else if (error.message.includes("User denied")) {
+              errorMsg += "Transaction was cancelled.";
+            } else if (error.message.includes("insufficient funds") || error.message.includes("gas")) {
+              errorMsg += "Insufficient funds for gas fees. Make sure you have ETH in your MetaMask account (even free transactions need gas).";
+            } else {
+              errorMsg += error.message;
+            }
+            $("#txStatus").text(errorMsg);
+          });
+      });
     }
 
     function feedOnKitty(zombieId, kittyId) {
@@ -401,17 +425,34 @@
           return;
         }
 
-        const targetZombieId = ids[0];
+        const targetZombieId = zombieId !== undefined ? zombieId : ids[0];
 
-        return cryptoZombies.methods.levelUp(targetZombieId)
-          .send({ from: userAccount, value: web3.utils.toWei("0.001", "ether") })
-          .on("receipt", function (receipt) {
-            $("#txStatus").html("✅ Power overwhelming! Zombie successfully leveled up! 🚀");
-            getZombiesByOwner(userAccount).then(displayZombies);
-          })
-          .on("error", function (error) {
-            $("#txStatus").text("❌ " + error.message);
-          });
+        // Check user's balance before attempting transaction
+        return web3.eth.getBalance(userAccount).then(function(balance) {
+          const requiredAmount = web3.utils.toWei("0.001", "ether");
+          if (web3.utils.toBN(balance).lt(web3.utils.toBN(requiredAmount))) {
+            $("#txStatus").text("❌ Insufficient balance! You need at least 0.001 ETH to level up.");
+            return;
+          }
+
+          return cryptoZombies.methods.levelUp(targetZombieId)
+            .send({ from: userAccount, value: requiredAmount })
+            .on("receipt", function (receipt) {
+              $("#txStatus").html("✅ Power overwhelming! Zombie successfully leveled up! 🚀");
+              getZombiesByOwner(userAccount).then(displayZombies);
+            })
+            .on("error", function (error) {
+              let errorMsg = "❌ Error leveling up: ";
+              if (error.message.includes("revert")) {
+                errorMsg += "Transaction failed. Make sure you have enough ETH (0.001 ETH required).";
+              } else if (error.message.includes("User denied")) {
+                errorMsg += "Transaction was cancelled.";
+              } else {
+                errorMsg += error.message;
+              }
+              $("#txStatus").text(errorMsg);
+            });
+        });
       });
     }
 
@@ -467,8 +508,13 @@
       }
       else if (window.web3) {
         window.web3 = new Web3(web3.currentProvider);
-        userAccount = web3.eth.accounts[0];
-        startApp();
+        // Use async getAccounts for Web3.js v1.x compatibility
+        web3.eth.getAccounts().then(function(accounts) {
+          userAccount = accounts[0];
+          startApp();
+        }).catch(function(error) {
+          $("#txStatus").html("❌ Error getting accounts: " + error.message);
+        });
       }
       else {
         $("#txStatus").html("❌ Non-Ethereum browser detected.<br>Please install MetaMask!");
