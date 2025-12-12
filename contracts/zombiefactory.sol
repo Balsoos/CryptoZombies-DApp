@@ -44,7 +44,7 @@ contract ZombieFactory is Ownable {
   }
 
   function createRandomZombie(string _name) public {
-    require(ownerZombieCount[msg.sender] == 0);
+    // Removed restriction: users can now create multiple zombies
     uint randDna = _generateRandomDna(_name);
     randDna = randDna - randDna % 100;
     _createZombie(_name, randDna);

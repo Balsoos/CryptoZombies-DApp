@@ -95,6 +95,17 @@
       transform: translateY(0);
     }
 
+    .loadZombiesButton:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: rgba(255, 255, 255, 0.3);
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .loadZombiesButton:active {
+      transform: none;
+    }
+
     #zombies {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -248,7 +259,25 @@
       <button class="levelupButton">⬆️ Level Up</button>
     </div>
 
+    <div id="zombieList" style="margin-top: 20px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; display: none;">
+      <h3 style="color: #00d4ff; margin-bottom: 15px;">My Zombie List</h3>
+      <ul id="zombieListItems" style="list-style: none; padding: 0;"></ul>
+    </div>
+
     <div id="zombies"></div>
+
+    <div style="text-align: center; margin-top: 30px; padding: 20px;">
+      <button class="loadZombiesButton" style="
+        padding: 6px 12px;
+        font-size: 0.85em;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      ">Refresh List</button>
+    </div>
   </div>
 
   <script>
@@ -257,6 +286,7 @@
     const showZombieButton = document.querySelector('.showZombieButton');
     const createzombieButton = document.querySelector('.createzombieButton');
     const levelupButton = document.querySelector('.levelupButton');
+    const loadZombiesButton = document.querySelector('.loadZombiesButton');
 
     // Function to load contract address from deployment info
     async function loadContractAddress() {
@@ -372,35 +402,25 @@
         return;
       }
 
-      // Check if user already has a zombie (only first zombie is free)
-      getZombiesByOwner(userAccount).then(function(ids) {
-        if (ids.length > 0) {
-          $("#txStatus").text("❌ You already have a zombie! You can only create one for free.");
-          return;
-        }
+      $("#txStatus").html("⏳ Creating new zombie on the blockchain...<br>This may take a moment...");
 
-        $("#txStatus").html("⏳ Creating new zombie on the blockchain...<br>This may take a moment...");
-
-        return cryptoZombies.methods.createRandomZombie(name)
-          .send({ from: userAccount })
-          .on("receipt", function (receipt) {
-            $("#txStatus").html(`✅ Successfully created <strong>${name}</strong>!<br>🧟 Your zombie is ready for battle!`);
-            getZombiesByOwner(userAccount).then(displayZombies);
-          })
-          .on("error", function (error) {
-            let errorMsg = "❌ Error creating zombie: ";
-            if (error.message.includes("revert")) {
-              errorMsg += "Transaction was rejected. You may already have a zombie.";
-            } else if (error.message.includes("User denied")) {
-              errorMsg += "Transaction was cancelled.";
-            } else if (error.message.includes("insufficient funds") || error.message.includes("gas")) {
-              errorMsg += "Insufficient funds for gas fees. Make sure you have ETH in your MetaMask account (even free transactions need gas).";
-            } else {
-              errorMsg += error.message;
-            }
-            $("#txStatus").text(errorMsg);
-          });
-      });
+      return cryptoZombies.methods.createRandomZombie(name)
+        .send({ from: userAccount })
+        .on("receipt", function (receipt) {
+          $("#txStatus").html(`✅ Successfully created <strong>${name}</strong>!<br>🧟 Your zombie is ready for battle!`);
+          getZombiesByOwner(userAccount).then(displayZombies);
+        })
+        .on("error", function (error) {
+          let errorMsg = "❌ Error creating zombie: ";
+          if (error.message.includes("revert")) {
+            errorMsg += "Transaction was rejected.";
+          } else if (error.message.includes("User denied")) {
+            errorMsg += "Transaction was cancelled.";
+          } else {
+            errorMsg += error.message;
+          }
+          $("#txStatus").text(errorMsg);
+        });
     }
 
     function feedOnKitty(zombieId, kittyId) {
@@ -435,13 +455,13 @@
             return;
           }
 
-          return cryptoZombies.methods.levelUp(targetZombieId)
+        return cryptoZombies.methods.levelUp(targetZombieId)
             .send({ from: userAccount, value: requiredAmount })
-            .on("receipt", function (receipt) {
-              $("#txStatus").html("✅ Power overwhelming! Zombie successfully leveled up! 🚀");
-              getZombiesByOwner(userAccount).then(displayZombies);
-            })
-            .on("error", function (error) {
+          .on("receipt", function (receipt) {
+            $("#txStatus").html("✅ Power overwhelming! Zombie successfully leveled up! 🚀");
+            getZombiesByOwner(userAccount).then(displayZombies);
+          })
+          .on("error", function (error) {
               let errorMsg = "❌ Error leveling up: ";
               if (error.message.includes("revert")) {
                 errorMsg += "Transaction failed. Make sure you have enough ETH (0.001 ETH required).";
@@ -452,7 +472,7 @@
               }
               $("#txStatus").text(errorMsg);
             });
-        });
+          });
       });
     }
 
@@ -511,7 +531,7 @@
         // Use async getAccounts for Web3.js v1.x compatibility
         web3.eth.getAccounts().then(function(accounts) {
           userAccount = accounts[0];
-          startApp();
+        startApp();
         }).catch(function(error) {
           $("#txStatus").html("❌ Error getting accounts: " + error.message);
         });
@@ -552,6 +572,47 @@
 
     levelupButton.addEventListener('click', () => {
       levelUp();
+    });
+
+    loadZombiesButton.addEventListener('click', async () => {
+      if (!userAccount || !cryptoZombies) {
+        $("#txStatus").text("❌ Please connect your wallet first.");
+        return;
+      }
+
+      $("#txStatus").text("📋 Loading your zombies...");
+      
+      try {
+        const zombieIds = await cryptoZombies.methods.getZombiesByOwner(userAccount).call();
+        
+        const zombieListDiv = document.getElementById('zombieList');
+        const zombieListItems = document.getElementById('zombieListItems');
+        
+        zombieListItems.innerHTML = '';
+        
+        if (zombieIds.length === 0) {
+          zombieListItems.innerHTML = '<li style="color: #888; padding: 10px;">No zombies found. Create your first zombie!</li>';
+        } else {
+          for (let i = 0; i < zombieIds.length; i++) {
+            const zombieId = zombieIds[i];
+            try {
+              const zombie = await cryptoZombies.methods.zombies(zombieId).call();
+              const listItem = document.createElement('li');
+              listItem.style.cssText = 'padding: 10px; margin: 5px 0; background: rgba(0, 212, 255, 0.1); border-radius: 5px; border-left: 3px solid #00d4ff;';
+              listItem.innerHTML = `<strong>ID:</strong> ${zombieId} | <strong>Name:</strong> ${zombie.name} | <strong>Level:</strong> ${zombie.level}`;
+              zombieListItems.appendChild(listItem);
+            } catch (error) {
+              console.error('Error fetching zombie details:', error);
+            }
+          }
+        }
+        
+        zombieListDiv.style.display = 'block';
+        $("#txStatus").text(`✅ Loaded ${zombieIds.length} zombie(s)`);
+      } catch (error) {
+        $("#txStatus").text("❌ Error: " + error.message);
+        console.error('Error loading zombies:', error);
+      }
     });
   </script>
 </body>
